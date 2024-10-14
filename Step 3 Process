@@ -1,0 +1,58 @@
+Here's a breakdown of the steps and code you're working with:
+
+### **Data Exploration**
+1. **`df.shape`**: This returns the dimensions of the DataFrame, showing the number of rows (940) and columns (15). This provides an initial sense of the dataset's size.
+   
+2. **`df.columns`**: This lists the column names in the dataset, helping to understand the structure of the data.
+   
+3. **`df.head(8)`**: Displays the first 8 rows of the dataset, giving a snapshot of what the data looks like.
+
+   - This dataset tracks daily activity from Fitbit users, with columns like `Id` (unique identifier), `ActivityDate`, and metrics like `TotalSteps`, `TotalDistance`, `Calories`, and various activity levels.
+
+### **Data Cleaning**
+1. **`df.dtypes`**: Lists the data types of each column. This is useful to ensure that the columns have appropriate types for the data they store.
+   - For example, `Id` is initially an `int64` but should be an `object` because it's an identifier.
+   - `ActivityDate` is an `object` but should be a date format for easier time-based analysis.
+
+2. **Data Type Conversion**:
+   - **`df['Id'] = df['Id'].astype(str)`**: Converts the `Id` column from `int64` to a string (`object`), since it's an identifier and doesn't need to be used for mathematical operations.
+   - **`df['ActivityDate'] = pd.to_datetime(df['ActivityDate'],format="%m/%d/%Y")`**: Converts the `ActivityDate` column from a string to a `datetime64` format for better date manipulation.
+
+3. **Checking and Removing Redundant Columns**:
+   - The dataset contains different distance-related columns, like `TotalDistance` and `TrackerDistance`. The code checks if the sum of the individual activity distances (`VeryActiveDistance`, `ModeratelyActiveDistance`, `LightActiveDistance`, `SedentaryActiveDistance`) matches the `TotalDistance`.
+   - If these columns are found redundant, one can be removed.
+
+4. **Summing Activity Minutes**:
+   - **`df['TotalMinutes'] = df['VeryActiveMinutes'] + df['FairlyActiveMinutes'] + df['LightlyActiveMinutes'] + df['SedentaryMinutes']`**: Adds up the activity minutes to get a total of all activity per day.
+
+5. **Renaming Columns**:
+   - **`df.columns = df.columns.str.lower()`**: Converts all column names to lowercase for consistency.
+   - **`df.rename()`**: Renames specific columns to make them more readable, for example, renaming `activitydate` to `activity_date`.
+
+6. **Day of Week Creation**:
+   - **`df['day_of_week'] = df['activity_date'].dt.day_name()`**: Creates a new column that adds the name of the day for each activity date.
+   - **`df['n_day_of_week'] = df['activity_date'].dt.weekday`**: Adds a column for the numeric representation of the weekday (0 for Monday, 6 for Sunday).
+
+7. **Null and Duplicate Checks**:
+   - **`df.isna().sum()`**: Checks for any missing values in the dataset.
+   - **`df.duplicated().sum()`**: Checks for duplicate rows in the dataset.
+
+### **Subsetting Data**
+- The code then subsets the dataset to keep only the columns relevant for the analysis. For instance, distance-related columns (`tracker_distance`, `logged_activities_distance`) may be dropped if found redundant.
+
+### **Creating Categories**
+1. **Grouping by User ID**:
+   - **`id_grp = df.groupby(['id'])`**: Groups the data by the `id` column to calculate per-user statistics.
+
+2. **Classifying Users by Activity Level**:
+   - The code calculates the average daily steps for each user (`id_avg_step = id_grp['total_steps'].mean()`) and classifies them into three categories:
+     - Sedentary (less than 6,000 daily steps)
+     - Active (6,000 to 12,000 daily steps)
+     - Very Active (more than 12,000 daily steps)
+   
+   - **`np.select(conditions, values)`**: This function is used to assign users to one of these three categories based on the conditions.
+
+3. **Adding a New Column**:
+   - **`df['activity_level']`**: This column categorizes each user based on their average daily steps (using a list comprehension to match the user ID with their corresponding activity level).
+
+This code pipeline effectively cleans, explores, and transforms the Fitbit dataset, preparing it for further analysis, like understanding user behavior or studying activity patterns over time.
